@@ -27,7 +27,7 @@ Health always returns a 200 response.
 ```go
 func (h *Handler) NotFound(w http.ResponseWriter, r *http.Request)
 ```
-NotFound is called when the request is not authorized.
+NotFound is called when the request is for an unknown resource.
 
 #### func (*Handler) Protected
 

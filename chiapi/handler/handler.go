@@ -46,7 +46,7 @@ func (h *Handler) Unauthorized(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// NotFound is called when the request is not authorized.
+// NotFound is called when the request is for an unknown resource.
 func (h *Handler) NotFound(w http.ResponseWriter, r *http.Request) {
 	writeResponse(r, w, http.StatusNotFound, &SimpleResponse{
 		TraceID: middleware.GetTraceID(r.Context()),
