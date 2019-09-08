@@ -1,4 +1,4 @@
-GO_FOLDERS=./chiapi/...
+GO_FOLDERS=./chiapi/... ./pkg/...
 
 pre-commit: go-test go-lint go-dep-ensure go-doc
 
@@ -47,6 +47,7 @@ go-doc:
 	@gfind -type d -printf '%d\t%P\n' | sort -r -nk1 | cut -f2- | \
 		grep -v '^\.' | \
 		grep -v '\/\.' | \
+		grep -v '^pkg$$' | \
 		grep -v '^vendor' | \
 		xargs -I{} bash -c "godocdown {} > {}/README.md"
 
