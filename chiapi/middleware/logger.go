@@ -21,6 +21,7 @@ func Logger(log *zap.Logger) func(next http.Handler) http.Handler {
 			traceID := GetTraceID(r.Context())
 
 			l := log.With(
+				zap.String("direction", "incoming"),
 				zap.String("trace_id", traceID),
 				zap.String("method", r.Method),
 				zap.String("path", path),
