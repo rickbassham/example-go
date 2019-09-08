@@ -62,6 +62,12 @@ func main() {
 		return
 	}
 
+	err = nr.WaitForConnection(30 * time.Second)
+	if err != nil {
+		log.Error("error waiting for newrelic connection", zap.Error(err))
+		return
+	}
+
 	// Give new relic 30 seconds to send instrumentation before terminating.
 	defer nr.Shutdown(30 * time.Second)
 
