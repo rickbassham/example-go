@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:719d9c856a213851c92fbbc1622068ef373b24f2cfa36111d5d20ae032c7e40e"
+  name = "github.com/caarlos0/env"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "4bd75bf16b9ef8c1383109b5e4d931bd72c3b6d0"
+  version = "v6.0.0"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -139,6 +147,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/caarlos0/env",
     "github.com/dgrijalva/jwt-go",
     "github.com/go-chi/chi",
     "github.com/go-chi/chi/middleware",
