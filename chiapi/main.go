@@ -21,6 +21,13 @@ import (
 	"github.com/rickbassham/example-go/pkg/env"
 )
 
+type config struct {
+	env.Config
+	ListenAddress string `env:"LISTEN_ADDRESS,required"`
+	JWTAuthSecret string `env:"JWT_AUTH_SECRET,required"`
+	CORSOrigin    string `env:"CORS_ORIGIN,required"`
+}
+
 func main() {
 	var err error
 
@@ -31,20 +38,35 @@ func main() {
 		}
 	}()
 
-	type config struct {
-		env.Config
-		ListenAddress string `env:"LISTEN_ADDRESS,required"`
-		JWTAuthSecret string `env:"JWT_AUTH_SECRET,required"`
-		CORSOrigin    string `env:"CORS_ORIGIN,required"`
-	}
-
 	var c config
 	err = env.Load(&c)
+	log := startLogger(c)
+
 	if err != nil {
-		println(err.Error())
+		log.Error("error initializing environment", zap.Error(err))
 		return
 	}
 
+	log.Info("initializing")
+
+	nr, err := startNewRelic(c)
+	if err != nil {
+		log.Error("error creating newrelic app", zap.Error(err))
+		return
+	}
+	// Give new relic 30 seconds to send instrumentation before terminating.
+	defer nr.Shutdown(30 * time.Second)
+
+	jwtAuth := jwtauth.New("HS256", []byte(c.JWTAuthSecret), nil)
+
+	h := &handler.Handler{}
+
+	r := router.NewRouter(h, log, nr, jwtAuth, c.BuildGitTag, c.CORSOrigin)
+
+	err = startHTTPServer(r, log, c.ListenAddress)
+}
+
+func startLogger(c config) *zap.Logger {
 	logEnc := zap.NewProductionEncoderConfig()
 	logEnc.EncodeTime = zapcore.ISO8601TimeEncoder
 	logEnc.TimeKey = "timestamp"
@@ -66,37 +88,29 @@ func main() {
 		zap.Time("start_time", time.Now()),
 	)
 
-	log.Info("initializing")
+	return log
+}
 
+func startNewRelic(c config) (newrelic.Application, error) {
 	nr, err := newrelic.NewApplication(newrelic.Config{
 		AppName: fmt.Sprintf("%s-%s", c.AppName, c.Environment),
 		Labels: map[string]string{
 			"Team":        "rickbassham",
 			"Environment": c.Environment,
+			"Version":     c.BuildGitTag,
 		},
 		License: c.NewRelicLicense,
 	})
 	if err != nil {
-		log.Error("error creating newrelic app", zap.Error(err))
-		return
+		return nil, err
 	}
 
 	err = nr.WaitForConnection(30 * time.Second)
 	if err != nil {
-		log.Error("error waiting for newrelic connection", zap.Error(err))
-		return
+		return nil, err
 	}
 
-	// Give new relic 30 seconds to send instrumentation before terminating.
-	defer nr.Shutdown(30 * time.Second)
-
-	jwtAuth := jwtauth.New("HS256", []byte(c.JWTAuthSecret), nil)
-
-	h := &handler.Handler{}
-
-	r := router.NewRouter(h, log, nr, jwtAuth, c.BuildGitTag, c.CORSOrigin)
-
-	err = startHTTPServer(r, log, c.ListenAddress)
+	return nr, err
 }
 
 func startHTTPServer(h http.Handler, log *zap.Logger, serverAddr string) error {
