@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/rickbassham/example-go/chiapi/handler"
 	"github.com/rickbassham/example-go/chiapi/router"
 	"github.com/rickbassham/example-go/chiapi/server"
+	"github.com/rickbassham/example-go/pkg/env"
 )
 
 func main() {
@@ -29,6 +31,20 @@ func main() {
 		}
 	}()
 
+	type config struct {
+		env.Config
+		ListenAddress string `env:"LISTEN_ADDRESS,required"`
+		JWTAuthSecret string `env:"JWT_AUTH_SECRET,required"`
+		CORSOrigin    string `env:"CORS_ORIGIN,required"`
+	}
+
+	var c config
+	err = env.Load(&c)
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
 	logEnc := zap.NewProductionEncoderConfig()
 	logEnc.EncodeTime = zapcore.ISO8601TimeEncoder
 	logEnc.TimeKey = "timestamp"
@@ -40,8 +56,11 @@ func main() {
 	))
 
 	log = log.With(
-		zap.String("app_name", "chiapi"),
-		zap.String("environment", "development"),
+		zap.String("app_name", c.AppName),
+		zap.String("environment", c.Environment),
+		zap.String("build_git_hash", c.BuildGitHash),
+		zap.String("build_git_tag", c.BuildGitTag),
+		zap.Time("build_date", c.BuildDate),
 		zap.String("team", "rickbassham"),
 		zap.String("run_id", uuid.New().String()),
 		zap.Time("start_time", time.Now()),
@@ -50,12 +69,12 @@ func main() {
 	log.Info("initializing")
 
 	nr, err := newrelic.NewApplication(newrelic.Config{
-		AppName: "chiapi-production",
+		AppName: fmt.Sprintf("%s-%s", c.AppName, c.Environment),
 		Labels: map[string]string{
 			"Team":        "rickbassham",
-			"Environment": "development",
+			"Environment": c.Environment,
 		},
-		License: "0123456789012345678901234567890123456789",
+		License: c.NewRelicLicense,
 	})
 	if err != nil {
 		log.Error("error creating newrelic app", zap.Error(err))
@@ -71,13 +90,13 @@ func main() {
 	// Give new relic 30 seconds to send instrumentation before terminating.
 	defer nr.Shutdown(30 * time.Second)
 
-	jwtAuth := jwtauth.New("HS256", []byte("env.AuthSecret"), nil)
+	jwtAuth := jwtauth.New("HS256", []byte(c.JWTAuthSecret), nil)
 
 	h := &handler.Handler{}
 
-	r := router.NewRouter(h, log, nr, jwtAuth, "0.0.1", "http://localhost")
+	r := router.NewRouter(h, log, nr, jwtAuth, c.BuildGitTag, c.CORSOrigin)
 
-	err = startHTTPServer(r, log, ":3000")
+	err = startHTTPServer(r, log, c.ListenAddress)
 }
 
 func startHTTPServer(h http.Handler, log *zap.Logger, serverAddr string) error {
