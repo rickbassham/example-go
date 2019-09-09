@@ -19,8 +19,8 @@ type Config struct {
 	AppName         string    `env:"APP_NAME,required"`
 	Environment     string    `env:"APP_ENV,required"`
 	BuildDate       time.Time `env:"BUILD_DATE"`
-	BuildGitHash    string    `env:"BUILD_GIT_HASH"`
-	BuildGitTag     string    `env:"BUILD_GIT_TAG"`
+	BuildGitHash    string    `env:"BUILD_GIT_HASH,required"`
+	BuildGitTag     string    `env:"BUILD_GIT_TAG,required"`
 	NewRelicLicense string    `env:"NEW_RELIC_LICENSE,required"`
 }
 ```
