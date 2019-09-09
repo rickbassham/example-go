@@ -1,0 +1,39 @@
+version: "3"
+services:
+  redis:
+    image: redis:5.0.0
+    ports:
+      - "6379:6379"
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: db
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+
+  chiapi:
+    build:
+      context: .
+      dockerfile: ./chiapi/Dockerfile
+      args:
+        appname: chiapi
+        gittag: development
+        githash: local
+    ports:
+      - "3000:3000"
+    command:
+      ./app
+    env_file: .local.env
+    environment:
+      APP_NAME: chiapi
+      APP_ENV: development
+      LISTEN_ADDRESS: ":3000"
+      JWT_AUTH_SECRET: "auth-secret"
+      CORS_ORIGIN: "http://localhost:8080"
+      REDIS_ADDRESS: "redis:6379"
+      MYSQL_CONNECTION_STRING: "user:password@tcp(mysql:3306)/db?parseTime=true"
