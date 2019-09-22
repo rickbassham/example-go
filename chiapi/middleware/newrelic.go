@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-chi/chi"
 	newrelic "github.com/newrelic/go-agent"
+
+	"github.com/rickbassham/example-go/pkg/tracing"
 )
 
 // NewRelicChiRouter will start a newrelic transaction for the request. It will
@@ -25,7 +27,7 @@ func NewRelicChiRouter(nr newrelic.Application) func(next http.Handler) http.Han
 
 			rctx := chi.RouteContext(r.Context())
 
-			txn.AddAttribute("X-Trace-Id", GetTraceID(r.Context())) // nolint
+			txn.AddAttribute("X-Trace-Id", tracing.FromContext(r.Context())) // nolint
 
 			for i := range rctx.URLParams.Keys {
 				if rctx.URLParams.Keys[i] == "*" {

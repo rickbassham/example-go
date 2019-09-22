@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/google/uuid"
+
+	"github.com/rickbassham/example-go/pkg/tracing"
 )
 
 // TraceID tries to read the X-Trace-Id request header, and if empty, creates
@@ -24,25 +25,7 @@ func TraceID(next http.Handler) http.Handler {
 
 		w.Header().Set("X-Trace-Id", traceID)
 
-		r = r.WithContext(WithTraceID(r.Context(), traceID))
+		r = r.WithContext(tracing.WithTraceID(r.Context(), traceID))
 		next.ServeHTTP(w, r)
 	})
-}
-
-var (
-	traceIDKey = contextKey("traceID")
-)
-
-// WithTraceID adds the traceID to the request context.
-func WithTraceID(ctx context.Context, traceID string) context.Context {
-	return context.WithValue(ctx, traceIDKey, traceID)
-}
-
-// GetTraceID retrieves the traceID from the request context.
-func GetTraceID(ctx context.Context) string {
-	if val, ok := ctx.Value(traceIDKey).(string); ok {
-		return val
-	}
-
-	return ""
 }

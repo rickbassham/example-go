@@ -5,18 +5,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/jwtauth"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/rickbassham/example-go/chiapi/middleware"
+	"github.com/rickbassham/example-go/pkg/identity"
 )
 
 func TestUser_NoToken(t *testing.T) {
 	var user string
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user = middleware.GetUser(r.Context())
+		user = identity.FromContext(r.Context())
 		w.WriteHeader(200)
 	})
 
@@ -33,7 +34,7 @@ func TestUser_WithToken(t *testing.T) {
 	var user string
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user = middleware.GetUser(r.Context())
+		user = identity.FromContext(r.Context())
 		w.WriteHeader(200)
 	})
 
