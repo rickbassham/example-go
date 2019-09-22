@@ -14,7 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/rickbassham/example-go/chiapi/handler"
-	"github.com/rickbassham/example-go/chiapi/middleware"
+	"github.com/rickbassham/example-go/pkg/identity"
+	"github.com/rickbassham/example-go/pkg/tracing"
 )
 
 func TestHealth_JSON(t *testing.T) {
@@ -22,7 +23,7 @@ func TestHealth_JSON(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/health", nil)
-	r = r.WithContext(middleware.WithTraceID(r.Context(), "my-trace-id"))
+	r = r.WithContext(tracing.WithTraceID(r.Context(), "my-trace-id"))
 
 	h.Health(w, r)
 
@@ -39,7 +40,7 @@ func TestHealth_XML(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/health", nil)
-	r = r.WithContext(middleware.WithTraceID(r.Context(), "my-trace-id"))
+	r = r.WithContext(tracing.WithTraceID(r.Context(), "my-trace-id"))
 	r.Header.Add("Accept", "text/xml")
 
 	h.Health(w, r)
@@ -57,9 +58,9 @@ func TestProtected(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/protected/1", nil)
-	r = r.WithContext(middleware.WithTraceID(r.Context(), "my-trace-id"))
+	r = r.WithContext(tracing.WithTraceID(r.Context(), "my-trace-id"))
 	r = r.WithContext(withChiParam(r.Context(), "id", "1"))
-	r = r.WithContext(middleware.WithUser(r.Context(), "my-user-name"))
+	r = r.WithContext(identity.WithUser(r.Context(), "my-user-name"))
 
 	h.Protected(w, r)
 

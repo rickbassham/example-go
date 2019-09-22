@@ -10,7 +10,7 @@ import (
 	newrelic "github.com/newrelic/go-agent"
 	"go.uber.org/zap"
 
-	"github.com/rickbassham/example-go/chiapi/middleware"
+	"github.com/rickbassham/example-go/pkg/logging"
 )
 
 // SimpleResponse is used to send a meaningful message back to the caller, with
@@ -38,7 +38,7 @@ func writeXMLResponse(ctx context.Context, w http.ResponseWriter, status int, re
 
 	err := xml.NewEncoder(w).Encode(resp)
 	if err != nil {
-		middleware.GetLogger(ctx).Error("error writing response", zap.Error(err))
+		logging.FromContext(ctx).Error("error writing response", zap.Error(err))
 		newrelic.FromContext(ctx).NoticeError(err) // nolint
 	}
 }
@@ -50,7 +50,7 @@ func writeJSONResponse(ctx context.Context, w http.ResponseWriter, status int, r
 
 	err := json.NewEncoder(w).Encode(resp)
 	if err != nil {
-		middleware.GetLogger(ctx).Error("error writing response", zap.Error(err))
+		logging.FromContext(ctx).Error("error writing response", zap.Error(err))
 		newrelic.FromContext(ctx).NoticeError(err) // nolint
 	}
 }
