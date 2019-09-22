@@ -7,16 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
-
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/jwtauth"
-
-	"go.uber.org/zap"
-
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	"github.com/rickbassham/example-go/chiapi/handler"
 	"github.com/rickbassham/example-go/chiapi/router"
@@ -27,6 +24,10 @@ type mockHandler struct {
 }
 
 func (m *mockHandler) Health(w http.ResponseWriter, r *http.Request) {
+	m.Called(w, r)
+}
+
+func (m *mockHandler) Cached(w http.ResponseWriter, r *http.Request) {
 	m.Called(w, r)
 }
 

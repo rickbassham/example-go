@@ -16,6 +16,7 @@ import (
 // Handler exposes the functions for handling web requests.
 type Handler interface {
 	Health(w http.ResponseWriter, r *http.Request)
+	Cached(w http.ResponseWriter, r *http.Request)
 	Protected(w http.ResponseWriter, r *http.Request)
 	NotFound(w http.ResponseWriter, r *http.Request)
 	Unauthorized(w http.ResponseWriter, r *http.Request)
@@ -42,6 +43,7 @@ func NewRouter(h Handler, log *zap.Logger, nr newrelic.Application, tokenAuth *j
 	r.NotFound(h.NotFound)
 
 	r.Get("/health", h.Health)
+	r.Get("/cached", h.Cached)
 
 	r.Route("/protected", func(r chi.Router) {
 		r.Use(jwtauth.Verifier(tokenAuth))
