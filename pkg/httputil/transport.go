@@ -9,7 +9,8 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	"github.com/rickbassham/example-go/chiapi/middleware"
+	"github.com/rickbassham/example-go/pkg/logging"
+	"github.com/rickbassham/example-go/pkg/tracing"
 )
 
 // HeaderTransport is an http.RoundTripper that will add a header to all requests.
@@ -31,10 +32,10 @@ func TraceIDTransport(old http.RoundTripper) http.RoundTripper {
 		ctx := req.Context()
 
 		// use the existing trace id if it exists
-		traceID := middleware.GetTraceID(ctx)
+		traceID := tracing.FromContext(ctx)
 		if traceID == "" {
 			traceID = uuid.New().String()
-			req = req.WithContext(middleware.WithTraceID(ctx, traceID))
+			req = req.WithContext(tracing.WithTraceID(ctx, traceID))
 		}
 
 		req.Header.Set("X-Trace-Id", traceID)
@@ -46,7 +47,7 @@ func TraceIDTransport(old http.RoundTripper) http.RoundTripper {
 // DefaultLogTransport will add the given logger to all request contexts.
 func DefaultLogTransport(log *zap.Logger, old http.RoundTripper) http.RoundTripper {
 	return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
-		req = req.WithContext(middleware.WithLogger(req.Context(), log))
+		req = req.WithContext(logging.WithLogger(req.Context(), log))
 
 		return old.RoundTrip(req)
 	})
@@ -55,7 +56,7 @@ func DefaultLogTransport(log *zap.Logger, old http.RoundTripper) http.RoundTripp
 // LogTransport will log every outgoing request.
 func LogTransport(old http.RoundTripper) http.RoundTripper {
 	return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
-		l := middleware.GetLogger(req.Context()).With(
+		l := logging.FromContext(req.Context()).With(
 			zap.String("direction", "outgoing"),
 			zap.String("url", req.URL.String()),
 			zap.String("method", req.Method),
