@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 	newrelic "github.com/newrelic/go-agent"
 )
 

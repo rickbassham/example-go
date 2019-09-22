@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 )
 
 // Client represents the functions needed for this wrapper.

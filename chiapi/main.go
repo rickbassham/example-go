@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-chi/jwtauth"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 	newrelic "github.com/newrelic/go-agent"
 	"go.uber.org/zap"
 
