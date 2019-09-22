@@ -10,15 +10,16 @@ import (
 	"time"
 
 	"github.com/go-chi/jwtauth"
-	"github.com/google/uuid"
+	"github.com/go-redis/redis"
 	newrelic "github.com/newrelic/go-agent"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/rickbassham/example-go/chiapi/handler"
 	"github.com/rickbassham/example-go/chiapi/router"
 	"github.com/rickbassham/example-go/chiapi/server"
+	"github.com/rickbassham/example-go/pkg/cache"
 	"github.com/rickbassham/example-go/pkg/env"
+	"github.com/rickbassham/example-go/pkg/logging"
 )
 
 type config struct {
@@ -26,6 +27,7 @@ type config struct {
 	ListenAddress string `env:"LISTEN_ADDRESS,required"`
 	JWTAuthSecret string `env:"JWT_AUTH_SECRET,required"`
 	CORSOrigin    string `env:"CORS_ORIGIN,required"`
+	RedisAddress  string `env:"REDIS_ADDRESS,required"`
 }
 
 func main() {
@@ -40,7 +42,7 @@ func main() {
 
 	var c config
 	err = env.Load(&c)
-	log := startLogger(c)
+	log := logging.Initialize(c.Config)
 
 	if err != nil {
 		log.Error("error initializing environment", zap.Error(err))
@@ -59,36 +61,23 @@ func main() {
 
 	jwtAuth := jwtauth.New("HS256", []byte(c.JWTAuthSecret), nil)
 
-	h := &handler.Handler{}
+	rc := redis.NewClient(&redis.Options{
+		Addr: c.RedisAddress,
+	})
+
+	_, err = rc.Ping().Result()
+	if err != nil {
+		log.Error("error pinging redis", zap.Error(err))
+		return
+	}
+
+	appCache := cache.New(rc)
+
+	h := handler.New(appCache)
 
 	r := router.NewRouter(h, log, nr, jwtAuth, c.BuildGitTag, c.CORSOrigin)
 
 	err = startHTTPServer(r, log, c.ListenAddress)
-}
-
-func startLogger(c config) *zap.Logger {
-	logEnc := zap.NewProductionEncoderConfig()
-	logEnc.EncodeTime = zapcore.ISO8601TimeEncoder
-	logEnc.TimeKey = "timestamp"
-
-	log := zap.New(zapcore.NewCore(
-		zapcore.NewJSONEncoder(logEnc),
-		zapcore.Lock(os.Stdout),
-		zap.NewAtomicLevel(),
-	))
-
-	log = log.With(
-		zap.String("app_name", c.AppName),
-		zap.String("environment", c.Environment),
-		zap.String("build_git_hash", c.BuildGitHash),
-		zap.String("build_git_tag", c.BuildGitTag),
-		zap.Time("build_date", c.BuildDate),
-		zap.String("team", "rickbassham"),
-		zap.String("run_id", uuid.New().String()),
-		zap.Time("start_time", time.Now()),
-	)
-
-	return log
 }
 
 func startNewRelic(c config) (newrelic.Application, error) {
