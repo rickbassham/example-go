@@ -1,4 +1,4 @@
-FROM golang:1.11-stretch as go-build
+FROM golang:1.13-stretch as go-build
 
 COPY . /go/src/github.com/rickbassham/example-go
 WORKDIR /go/src/github.com/rickbassham/example-go/
@@ -15,7 +15,7 @@ RUN echo "./app" >> start.sh
 
 RUN chmod +x start.sh
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -v -o app ./${appname}
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -v -o app ./${appname}
 
 # Build the final image.
 FROM alpine:3.10
