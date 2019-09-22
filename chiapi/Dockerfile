@@ -1,7 +1,7 @@
 FROM golang:1.13-stretch as go-build
 
-COPY . /go/src/github.com/rickbassham/example-go
-WORKDIR /go/src/github.com/rickbassham/example-go/
+COPY . /build
+WORKDIR /build/
 
 ARG appname
 ARG githash
@@ -27,7 +27,7 @@ RUN adduser -S app
 
 USER app
 WORKDIR /app
-COPY --from=go-build /go/src/github.com/rickbassham/example-go/app .
-COPY --from=go-build /go/src/github.com/rickbassham/example-go/start.sh .
+COPY --from=go-build /build/app .
+COPY --from=go-build /build/start.sh .
 
 CMD /bin/sh ./start.sh
